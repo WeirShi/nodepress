@@ -30,7 +30,7 @@ export class CacheConfigService implements CacheOptionsFactory {
   // 重试策略
   public retryStrategy(options: RetryStrategyOptions) {
 
-    console.error('Reids 发生异常！', options.error);
+    console.error('Redis 发生异常！', options.error);
     this.sendAlarmMail(String(options.error));
 
     if (options?.error?.code === 'ECONNREFUSED') {
@@ -53,6 +53,9 @@ export class CacheConfigService implements CacheOptionsFactory {
       port: APP_CONFIG.REDIS.port as number,
       retry_strategy: this.retryStrategy.bind(this),
     };
+    if (APP_CONFIG.REDIS.password) {
+      redisOptions.password = APP_CONFIG.REDIS.password
+    }
     return {
       store: redisStore,
       ttl: APP_CONFIG.REDIS.ttl,

@@ -26,10 +26,10 @@ import * as urlMap from '@app/transformers/urlmap.transformer';
 export class SyndicationService {
 
   private pagesMap: SitemapItemLoose[] = [
+    // MARK: 不要与前端业务有耦合，所以 JOB LENS 等页面都不再加入 map
     { url: APP_CONFIG.APP.URL, changefreq: EnumChangefreq.ALWAYS, priority: 1 },
-    { url: urlMap.getLensPageUrl(), changefreq: EnumChangefreq.MONTHLY, priority: 1 },
-    { url: urlMap.getAboutPageUrl(), changefreq: EnumChangefreq.MONTHLY, priority: 1 },
-    { url: urlMap.getSitemapPageUrl(), changefreq: EnumChangefreq.ALWAYS, priority: 1 },
+    { url: urlMap.getAboutPageUrl(), changefreq: EnumChangefreq.YEARLY, priority: 1 },
+    { url: urlMap.getArchivePageUrl(), changefreq: EnumChangefreq.ALWAYS, priority: 1 },
     { url: urlMap.getGuestbookPageUrl(), changefreq: EnumChangefreq.ALWAYS, priority: 1 },
   ];
 
@@ -49,16 +49,15 @@ export class SyndicationService {
     });
     this.rssCache = this.cacheService.promise({
       ioMode: true,
-      key: CACHE_KEY.RSSXML,
+      key: CACHE_KEY.RSS_XML,
       promise: this.getRSSXML.bind(this),
     });
     this.updateCache();
   }
 
-  // TODO: FE 上线后迁移 static -> public
-  private getXmlFilePath(fileName: string, foldName: string): string {
+  private getXmlFilePath(fileName: string): string {
     return path.format({
-      dir: path.join(APP_CONFIG.APP.FRONT_END_PATH, foldName),
+      dir: APP_CONFIG.APP.FRONT_END_PUBLIC_PATH,
       name: fileName,
       ext: '.xml',
     });
@@ -150,7 +149,7 @@ export class SyndicationService {
       image_url: `${APP_CONFIG.APP.URL}/icon.png`,
       managingEditor: APP_CONFIG.APP.MASTER,
       webMaster: APP_CONFIG.APP.MASTER,
-      generator: `${APP_CONFIG.INFO.name} ${APP_CONFIG.INFO.version}`,
+      generator: `${APP_CONFIG.PROJECT.name} ${APP_CONFIG.PROJECT.version}`,
       categories: categories.map(category => category.slug),
       copyright: `${new Date().getFullYear()} ${APP_CONFIG.APP.NAME}`,
       language: 'zh',
@@ -185,12 +184,10 @@ export class SyndicationService {
   public updateCache(): Promise<any> {
     return Promise.all([
       this.sitemapCache.update().then(xml => {
-        fs.writeFileSync(this.getXmlFilePath('sitemap', 'static'), xml)
-        fs.writeFileSync(this.getXmlFilePath('sitemap', 'public'), xml)
+        fs.writeFileSync(this.getXmlFilePath('sitemap'), xml)
       }),
       this.rssCache.update().then(xml => {
-        fs.writeFileSync(this.getXmlFilePath('rss', 'static'), xml)
-        fs.writeFileSync(this.getXmlFilePath('rss', 'public'), xml)
+        fs.writeFileSync(this.getXmlFilePath('rss'), xml)
       }),
     ])
   }
